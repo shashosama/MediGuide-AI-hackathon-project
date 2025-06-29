@@ -17,40 +17,39 @@ export const MaskDetectionOverlay: React.FC<MaskDetectionOverlayProps> = ({
   if (!maskResult) return null;
 
   return (
-    <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-20">
+    <div className="space-y-2">
       {/* Mask Detection Status */}
       <div className={cn(
-        "flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-lg backdrop-blur-sm text-xs sm:text-sm font-medium mb-2",
+        "flex items-center gap-2 px-3 py-2 rounded-lg backdrop-blur-sm text-sm font-medium border shadow-lg",
         maskResult.hasMask 
-          ? "bg-green-500/20 border border-green-400/30 text-green-200"
-          : "bg-red-500/20 border border-red-400/30 text-red-200"
+          ? "bg-green-500/90 border-green-400 text-white"
+          : "bg-red-500/90 border-red-400 text-white"
       )}>
         {maskResult.hasMask ? (
           <>
-            <ShieldCheck className="size-3 sm:size-4" />
+            <ShieldCheck className="size-4" />
             <span>Mask Detected</span>
           </>
         ) : (
           <>
-            <Shield className="size-3 sm:size-4" />
+            <Shield className="size-4" />
             <span>No Mask Detected</span>
           </>
         )}
-        <span className="text-xs opacity-70">
+        <span className="text-xs opacity-80">
           ({Math.round(maskResult.confidence * 100)}%)
         </span>
       </div>
 
       {/* Mask Warning for Contagious Symptoms */}
       {showMaskWarning && !maskResult.hasMask && isContagiousSymptoms && (
-        <div className="bg-orange-500/20 border border-orange-400/30 text-orange-200 px-2 sm:px-3 py-1 sm:py-2 rounded-lg backdrop-blur-sm text-xs sm:text-sm max-w-[200px] sm:max-w-xs">
-          <div className="flex items-start gap-1 sm:gap-2">
-            <AlertTriangle className="size-3 sm:size-4 flex-shrink-0 mt-0.5" />
+        <div className="bg-orange-500/90 border border-orange-400 text-white px-3 py-2 rounded-lg backdrop-blur-sm text-sm max-w-[280px] shadow-lg">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="size-4 flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-medium mb-1">Mask Recommended</p>
-              <p className="text-xs opacity-90">
-                Since you're experiencing flu-like or contagious symptoms, 
-                please consider wearing a mask to protect others.
+              <p className="text-xs opacity-90 leading-relaxed">
+                Since you're experiencing flu-like symptoms, please consider wearing a mask to protect others.
               </p>
             </div>
           </div>
