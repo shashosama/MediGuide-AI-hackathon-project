@@ -25,9 +25,12 @@ import {
   MessageCircle,
   X,
   Send,
+  Shield,
+  ShieldCheck,
+  AlertTriangle,
 } from "lucide-react";
-import { tavusEventHandler } from "@/utils/tavusEventHandler";
-import { ToolCallEvent, UtteranceEvent } from "@/types/medical";
+import { maskDetector, MaskDetectionResult, isContagiousSymptom } from "@/utils/maskDetection";
+import { MaskDetectionOverlay } from "@/components/MaskDetectionOverlay";
 
 export const Conversation: React.FC = () => {
   const [conversation, setConversation] = useAtom(conversationAtom);
@@ -48,10 +51,116 @@ export const Conversation: React.FC = () => {
   const [isJoining, setIsJoining] = useState(true);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [showTextChat, setShowTextChat] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
+  const [transcript, setTranscript] = useState<string>("");
+  const [maskResult, setMaskResult] = useState<MaskDetectionResult | null>(null);
+  const [showMaskWarning, setShowMaskWarning] = useState(false);
+  const [hasContagiousSymptoms, setHasContagiousSymptoms] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
+  const maskDetectionInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Join video room with better error handling
+  // Initialize speech recognition
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      const recognitionInstance = new SpeechRecognition();
+      
+      recognitionInstance.continuous = true;
+      recognitionInstance.interimResults = true;
+      recognitionInstance.lang = 'en-US';
+
+      recognitionInstance.onresult = (event: any) => {
+        let finalTranscript = '';
+        let interimTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcriptPart = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcriptPart;
+          } else {
+            interimTranscript += transcriptPart;
+          }
+        }
+
+        if (finalTranscript) {
+          setMessages(prev => [...prev, `Patient: ${finalTranscript}`]);
+          
+          // Check for contagious symptoms
+          if (isContagiousSymptom(finalTranscript)) {
+            setHasContagiousSymptoms(true);
+            setShowMaskWarning(true);
+          }
+          
+          // Send to Tavus CVI
+          if (daily) {
+            daily.sendAppMessage({
+              event_type: "conversation.text_input",
+              text: finalTranscript
+            });
+          }
+        }
+
+        setTranscript(finalTranscript + interimTranscript);
+      };
+
+      recognitionInstance.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+
+      recognitionInstance.onend = () => {
+        setIsListening(false);
+      };
+
+      setRecognition(recognitionInstance);
+    }
+  }, [daily]);
+
+  // Initialize mask detection
+  useEffect(() => {
+    const initMaskDetection = async () => {
+      try {
+        await maskDetector.loadModel();
+      } catch (error) {
+        console.error('Failed to initialize mask detection:', error);
+      }
+    };
+
+    initMaskDetection();
+
+    return () => {
+      if (maskDetectionInterval.current) {
+        clearInterval(maskDetectionInterval.current);
+      }
+      maskDetector.dispose();
+    };
+  }, []);
+
+  // Start mask detection when video is available
+  useEffect(() => {
+    if (isCameraEnabled && videoRef.current) {
+      maskDetectionInterval.current = setInterval(async () => {
+        if (videoRef.current) {
+          try {
+            const result = await maskDetector.detectMask(videoRef.current);
+            setMaskResult(result);
+          } catch (error) {
+            console.error('Mask detection error:', error);
+          }
+        }
+      }, 2000); // Check every 2 seconds
+
+      return () => {
+        if (maskDetectionInterval.current) {
+          clearInterval(maskDetectionInterval.current);
+        }
+      };
+    }
+  }, [isCameraEnabled]);
+
+  // Join video room
   useEffect(() => {
     if (conversation?.conversation_url && daily && isJoining) {
       console.log("Joining conversation:", conversation.conversation_url);
@@ -68,15 +177,24 @@ export const Conversation: React.FC = () => {
         // Set initial media state
         daily.setLocalVideo(true);
         daily.setLocalAudio(true);
+        
+        // Start speech recognition automatically after greeting
+        setTimeout(() => {
+          if (recognition && !isListening) {
+            recognition.start();
+            setIsListening(true);
+          }
+        }, 3000); // Wait 3 seconds after joining
+        
       }).catch((error) => {
         console.error("Failed to join conversation:", error);
         setJoinError("Failed to join video session. Please try again.");
         setIsJoining(false);
       });
     }
-  }, [conversation?.conversation_url, daily, isJoining]);
+  }, [conversation?.conversation_url, daily, isJoining, recognition, isListening]);
 
-  // Handle Tavus events with improved response generation
+  // Handle Tavus events
   useEffect(() => {
     if (!daily) return;
 
@@ -84,33 +202,27 @@ export const Conversation: React.FC = () => {
       console.log("Received app message:", msg);
       
       if (msg?.data?.event_type === "conversation.utterance") {
-        // Handle utterance events
-        const utteranceEvent: UtteranceEvent = {
-          transcript: msg.data.transcript || "",
-          confidence: msg.data.confidence || 0
-        };
-        
-        tavusEventHandler.handleUtteranceEvent(utteranceEvent);
-        setMessages(prev => [...prev, `Patient: ${utteranceEvent.transcript}`]);
+        // AI is speaking - pause speech recognition temporarily
+        if (recognition && isListening) {
+          recognition.stop();
+          setTimeout(() => {
+            if (recognition) {
+              recognition.start();
+            }
+          }, 2000);
+        }
       }
       
       if (msg?.data?.event_type === "conversation.tool_call") {
-        // Handle tool call events
-        const toolCallEvent: ToolCallEvent = {
-          tool_name: msg.data.tool_name || "",
-          parameters: msg.data.parameters || {}
-        };
-        
         try {
-          const result = tavusEventHandler.handleToolCallEvent(toolCallEvent);
+          const result = handleDiagnoseSymptom(msg.data.parameters?.symptom || '');
           console.log("Tool call result:", result);
           
-          // Send response back to Tavus with professional language
-          if (toolCallEvent.tool_name === "diagnoseSymptom" && result) {
-            const responseText = tavusEventHandler.generateResponseText(result);
+          if (result) {
+            const responseText = `Based on the symptoms described, I recommend visiting the ${result.department}. They are located on the ${result.floor}.`;
             setMessages(prev => [...prev, `Medical Assistant: ${responseText}`]);
             
-            // Send text response back to Tavus CVI
+            // Send response back to Tavus CVI
             daily.sendAppMessage({
               event_type: "conversation.text_respond",
               text: responseText
@@ -134,11 +246,57 @@ export const Conversation: React.FC = () => {
     return () => {
       daily.off("app-message", handleAppMessage);
     };
-  }, [daily]);
+  }, [daily, recognition, isListening]);
+
+  const handleDiagnoseSymptom = (symptom: string) => {
+    const symptomLower = symptom.toLowerCase();
+    
+    const mapping: { [key: string]: { department: string; floor: string } } = {
+      "chest pain": { department: "Cardiology", floor: "Third Floor" },
+      "heart pain": { department: "Cardiology", floor: "Third Floor" },
+      "shortness of breath": { department: "Pulmonology", floor: "Second Floor" },
+      "difficulty breathing": { department: "Pulmonology", floor: "Second Floor" },
+      "rash": { department: "Dermatology", floor: "Fourth Floor" },
+      "skin irritation": { department: "Dermatology", floor: "Fourth Floor" },
+      "headache": { department: "Neurology", floor: "Fifth Floor" },
+      "migraine": { department: "Neurology", floor: "Fifth Floor" },
+      "back pain": { department: "Orthopedics", floor: "Sixth Floor" },
+      "joint pain": { department: "Orthopedics", floor: "Sixth Floor" },
+      "stomach pain": { department: "Gastroenterology", floor: "Third Floor" },
+      "nausea": { department: "Gastroenterology", floor: "Third Floor" },
+      "fever": { department: "General Medicine", floor: "First Floor" },
+    };
+
+    for (const [keyword, result] of Object.entries(mapping)) {
+      if (symptomLower.includes(keyword)) {
+        return result;
+      }
+    }
+
+    return { department: "General Medicine", floor: "First Floor" };
+  };
+
+  const toggleSpeechRecognition = () => {
+    if (!recognition) return;
+    
+    if (isListening) {
+      recognition.stop();
+      setIsListening(false);
+    } else {
+      recognition.start();
+      setIsListening(true);
+    }
+  };
 
   const handleSend = () => {
     if (!input.trim()) return;
     setMessages(prev => [...prev, `Patient: ${input}`]);
+    
+    // Check for contagious symptoms
+    if (isContagiousSymptom(input)) {
+      setHasContagiousSymptoms(true);
+      setShowMaskWarning(true);
+    }
     
     // Send message to Tavus CVI
     if (daily) {
@@ -169,6 +327,14 @@ export const Conversation: React.FC = () => {
 
   const leaveConversation = useCallback(async () => {
     try {
+      if (recognition && isListening) {
+        recognition.stop();
+      }
+      
+      if (maskDetectionInterval.current) {
+        clearInterval(maskDetectionInterval.current);
+      }
+      
       if (daily) {
         await daily.leave();
         daily.destroy();
@@ -183,7 +349,7 @@ export const Conversation: React.FC = () => {
       setConversation(null);
       setScreenState({ currentScreen: "finalScreen" });
     }
-  }, [daily, token, conversation, setConversation, setScreenState]);
+  }, [daily, token, conversation, setConversation, setScreenState, recognition, isListening]);
 
   // Show error state if join failed
   if (joinError) {
@@ -253,14 +419,45 @@ export const Conversation: React.FC = () => {
             
             {/* Local participant video (picture-in-picture) */}
             {localSessionId && (
-              <Video
-                id={localSessionId}
-                tileClassName="!object-cover"
-                className={cn(
-                  "absolute bottom-2 right-2 border-2 border-blue-400 rounded-lg shadow-lg z-10",
-                  "w-12 h-9 sm:w-16 sm:h-12 md:w-20 md:h-15"
-                )}
-              />
+              <div className="absolute bottom-2 right-2 border-2 border-blue-400 rounded-lg shadow-lg z-10">
+                <Video
+                  id={localSessionId}
+                  tileClassName="!object-cover"
+                  className={cn(
+                    "w-12 h-9 sm:w-16 sm:h-12 md:w-20 md:h-15"
+                  )}
+                />
+                <video
+                  ref={videoRef}
+                  className="hidden"
+                  autoPlay
+                  muted
+                  playsInline
+                />
+              </div>
+            )}
+            
+            {/* Mask Detection Overlay */}
+            <MaskDetectionOverlay
+              maskResult={maskResult}
+              showMaskWarning={showMaskWarning}
+              isContagiousSymptoms={hasContagiousSymptoms}
+            />
+            
+            {/* Speech Recognition Status */}
+            {isListening && (
+              <div className="absolute top-2 left-2 bg-red-500/20 border border-red-400/30 text-red-200 px-3 py-2 rounded-lg backdrop-blur-sm text-sm flex items-center gap-2">
+                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+                Listening...
+              </div>
+            )}
+            
+            {/* Live Transcript */}
+            {transcript && (
+              <div className="absolute bottom-16 left-2 right-2 bg-black/80 text-white p-2 rounded-lg text-sm max-h-20 overflow-y-auto">
+                <div className="text-xs opacity-70 mb-1">Live Transcript:</div>
+                {transcript}
+              </div>
             )}
             
             {/* No video placeholder */}
@@ -366,6 +563,23 @@ export const Conversation: React.FC = () => {
             >
               {isMicEnabled ? <MicIcon className="size-3 sm:size-4 md:size-5" /> : <MicOffIcon className="size-3 sm:size-4 md:size-5" />}
             </Button>
+
+            {/* Speech Recognition Toggle */}
+            {recognition && (
+              <Button 
+                onClick={toggleSpeechRecognition}
+                className={cn(
+                  "rounded-full transition-all duration-200 shadow-lg flex items-center justify-center",
+                  "w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12",
+                  isListening 
+                    ? "bg-red-500 hover:bg-red-600 text-white animate-pulse" 
+                    : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-300"
+                )}
+                title={isListening ? "Stop speech recognition" : "Start speech recognition"}
+              >
+                <MicIcon className="size-3 sm:size-4 md:size-5" />
+              </Button>
+            )}
 
             {/* Video Toggle */}
             <Button 
