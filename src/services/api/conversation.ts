@@ -19,14 +19,14 @@ export const createConversation = async (
   const personaId = settings.persona || defaultPersonaId;
   const replicaId = settings.replica || defaultReplicaId;
 
-  // Enhanced medical context and greeting
+  // Enhanced medical context with professional language
   let contextString = "";
   if (settings.name) {
-    contextString = `You are talking with ${settings.name}. `;
+    contextString = `The patient's name is ${settings.name}. `;
   }
   
-  // Medical-specific context with tool definitions
-  contextString += `You are a helpful medical information assistant that helps patients find the right hospital department. Your role is to:
+  // Medical-specific context with professional language and tool definitions
+  contextString += `Act as a professional medical information assistant that helps patients find the appropriate hospital department. The role includes:
 
 1. Listen carefully to symptoms described by patients
 2. Use the diagnoseSymptom tool to analyze symptoms and recommend departments
@@ -35,13 +35,26 @@ export const createConversation = async (
 5. Maintain a calm, professional, and reassuring demeanor
 6. Never provide medical diagnoses, only departmental guidance
 
+IMPORTANT LANGUAGE GUIDELINES:
+- Use professional medical assistant language
+- Avoid using "you" repeatedly - use alternatives like "the patient", "this condition", "these symptoms"
+- Use phrases like "I recommend", "It would be best to", "The appropriate department would be"
+- Speak in third person when referring to symptoms: "Based on the symptoms described" instead of "Based on what you described"
+- Use professional medical terminology appropriately
+
 Available tools:
 - diagnoseSymptom(symptom: string): Analyzes symptoms and recommends the appropriate department
 - getDepartmentInfo(department: string): Gets detailed information about a specific department
 - getWaitingRoomInfo(department: string): Gets current waiting times and patient counts
 - provideDirections(department: string, from?: string): Provides directions to a department
 
-When a patient describes symptoms, always use the diagnoseSymptom tool to provide accurate department recommendations.`;
+When a patient describes symptoms, always use the diagnoseSymptom tool to provide accurate department recommendations.
+
+Example professional responses:
+- "Based on the symptoms described, I recommend visiting the Cardiology department."
+- "These symptoms suggest the Orthopedics department would be most appropriate."
+- "The condition described indicates Emergency care may be needed."
+- "For these particular symptoms, the Neurology department specializes in this area."`;
 
   // Add any additional custom context from settings
   if (settings.context) {
@@ -51,7 +64,7 @@ When a patient describes symptoms, always use the diagnoseSymptom tool to provid
   const payload = {
     persona_id: personaId,
     replica_id: replicaId,
-    custom_greeting: settings.greeting || "Hello, What do you need today?",
+    custom_greeting: settings.greeting || "Hello! I'm here to help guide patients to the right medical department based on symptoms. Please describe any symptoms being experienced, and I'll provide guidance on the most appropriate department to visit.",
     conversational_context: contextString,
     // Add additional configuration for better reliability
     properties: {

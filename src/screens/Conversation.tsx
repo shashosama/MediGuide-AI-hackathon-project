@@ -76,7 +76,7 @@ export const Conversation: React.FC = () => {
     }
   }, [conversation?.conversation_url, daily, isJoining]);
 
-  // Handle Tavus events
+  // Handle Tavus events with improved response generation
   useEffect(() => {
     if (!daily) return;
 
@@ -91,7 +91,7 @@ export const Conversation: React.FC = () => {
         };
         
         tavusEventHandler.handleUtteranceEvent(utteranceEvent);
-        setMessages(prev => [...prev, `You: ${utteranceEvent.transcript}`]);
+        setMessages(prev => [...prev, `Patient: ${utteranceEvent.transcript}`]);
       }
       
       if (msg?.data?.event_type === "conversation.tool_call") {
@@ -105,10 +105,10 @@ export const Conversation: React.FC = () => {
           const result = tavusEventHandler.handleToolCallEvent(toolCallEvent);
           console.log("Tool call result:", result);
           
-          // Send response back to Tavus
+          // Send response back to Tavus with professional language
           if (toolCallEvent.tool_name === "diagnoseSymptom" && result) {
             const responseText = tavusEventHandler.generateResponseText(result);
-            setMessages(prev => [...prev, `AI: ${responseText}`]);
+            setMessages(prev => [...prev, `Medical Assistant: ${responseText}`]);
             
             // Send text response back to Tavus CVI
             daily.sendAppMessage({
@@ -118,8 +118,8 @@ export const Conversation: React.FC = () => {
           }
         } catch (error) {
           console.error("Tool call error:", error);
-          const errorResponse = "I apologize, but I'm having trouble processing your request. Could you please describe your symptoms again?";
-          setMessages(prev => [...prev, `AI: ${errorResponse}`]);
+          const errorResponse = "I apologize, but I'm having trouble processing the request. Could the symptoms be described again?";
+          setMessages(prev => [...prev, `Medical Assistant: ${errorResponse}`]);
           
           daily.sendAppMessage({
             event_type: "conversation.text_respond",
@@ -138,7 +138,7 @@ export const Conversation: React.FC = () => {
 
   const handleSend = () => {
     if (!input.trim()) return;
-    setMessages(prev => [...prev, `You: ${input}`]);
+    setMessages(prev => [...prev, `Patient: ${input}`]);
     
     // Send message to Tavus CVI
     if (daily) {
@@ -312,15 +312,15 @@ export const Conversation: React.FC = () => {
                       key={idx} 
                       className={cn(
                         "p-1.5 sm:p-2 rounded text-xs max-w-[90%]",
-                        msg.startsWith('You') 
+                        msg.startsWith('Patient') 
                           ? "bg-blue-100 border border-blue-200 text-blue-800 ml-auto" 
                           : "bg-slate-100 border border-slate-200 text-slate-700"
                       )}
                     >
                       <div className="font-medium text-xs opacity-70 mb-1">
-                        {msg.startsWith('You') ? 'You' : 'AI'}
+                        {msg.startsWith('Patient') ? 'Patient' : 'Medical Assistant'}
                       </div>
-                      <div className="text-xs leading-tight">{msg.replace(/^(You|AI): /, '')}</div>
+                      <div className="text-xs leading-tight">{msg.replace(/^(Patient|Medical Assistant): /, '')}</div>
                     </div>
                   ))
                 )}
