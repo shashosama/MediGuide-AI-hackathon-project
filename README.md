@@ -1,4 +1,4 @@
-# Advanced Medical Information Assistant
+# MediGuide AI - Intelligent Medical Triage Assistant
 
 ## Team members - Teresa Nguyen, Bach Nguyen, Shaun Suandy and Shashota Saha
 (so grateful to all the teammates) 
@@ -7,7 +7,7 @@
 Navigating healthcare systems is often confusing and intimidating for patients. Many people struggle to determine which medical department they should visit based on their symptoms, leading to inefficient use of healthcare resources, longer wait times, and potentially delayed treatment. Traditional triage systems are manual, subjective, and don't leverage modern AI capabilities to provide personalized guidance.
 
 ## Solution
-An intelligent medical information assistant that revolutionizes healthcare triage through advanced AI technologies. Built with Tavus's Conversational Video Interface, this application features real-time mask detection, natural language processing, risk assessment, comprehensive symptom analysis, and personalized medical guidance with persistent user data.
+MediGuide AI is an intelligent medical triage assistant that revolutionizes healthcare navigation through advanced AI technologies. Built with Tavus's Conversational Video Interface, this application features real-time mask detection, natural language processing, risk assessment, comprehensive symptom analysis, and personalized medical guidance with persistent user data.
 
 ## Key Features
 
@@ -78,8 +78,8 @@ The system intelligently routes patients to the appropriate medical departments:
 
 #### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/yourusername/advanced-medical-ai.git
-cd advanced-medical-ai
+git clone https://github.com/yourusername/mediguide-ai.git
+cd mediguide-ai
 ```
 
 #### Step 2: Install Dependencies
@@ -319,4 +319,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-*Making healthcare navigation smarter, safer, and more accessible through responsible AI innovation.*
+**MediGuide AI** - *Making healthcare navigation smarter, safer, and more accessible through responsible AI innovation.*

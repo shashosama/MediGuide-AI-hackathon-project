@@ -206,7 +206,7 @@ export const Instructions: React.FC = () => {
         {/* Hospital Name Header */}
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-800 mb-2">
-            BateShaun Hospital
+            MediGuide AI
           </h1>
           <div className="w-24 h-1 bg-blue-600 mx-auto rounded-full"></div>
         </div>
@@ -219,15 +219,15 @@ export const Instructions: React.FC = () => {
               fontFamily: 'Source Code Pro, monospace'
             }}
           >
-            <span className="text-slate-800">Medical</span>{" "}
+            <span className="text-slate-800">Intelligent Medical</span>{" "}
             <span style={{
               color: '#3b82f6'
-            }}>Information Assistant</span>
+            }}>Triage Assistant</span>
           </h2>
         </div>
         
         <p className="max-w-[650px] text-center text-sm sm:text-base md:text-lg text-slate-600 mb-6 sm:mb-8 px-4">
-          Get guidance on which hospital department would be most appropriate for your symptoms. 
+          Get intelligent guidance on which medical department would be most appropriate for your symptoms. 
           Choose between video consultation or text-based chat.
         </p>
 

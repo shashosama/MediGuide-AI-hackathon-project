@@ -1,8 +1,8 @@
 {
-  "name": "advanced-medical-ai-assistant",
+  "name": "mediguide-ai",
   "private": true,
   "version": "1.0.0",
-  "description": "Advanced Medical Information Assistant with AI-Powered Healthcare Triage",
+  "description": "Intelligent Medical Triage Assistant with AI-Powered Healthcare Navigation",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -68,13 +68,13 @@
     "typescript",
     "tensorflow",
     "tavus",
-    "supabase"
+    "mediguide"
   ],
-  "author": "Your Name",
+  "author": "Teresa Nguyen, Bach Nguyen, Shaun Suandy, Shashota Saha",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/advanced-medical-ai-assistant.git"
+    "url": "https://github.com/yourusername/mediguide-ai.git"
   },
-  "homepage": "https://github.com/yourusername/advanced-medical-ai-assistant#readme"
+  "homepage": "https://github.com/yourusername/mediguide-ai#readme"
 }
