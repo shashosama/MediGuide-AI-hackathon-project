@@ -17,10 +17,10 @@ export const MaskDetectionOverlay: React.FC<MaskDetectionOverlayProps> = ({
   // Always show something if we have mask detection running
   if (!maskResult) {
     return (
-      <div className="bg-gray-500/80 border border-gray-400 text-white px-3 py-2 rounded-lg backdrop-blur-sm text-sm font-medium shadow-lg">
+      <div className="bg-blue-500/80 border border-blue-400 text-white px-3 py-2 rounded-lg backdrop-blur-sm text-sm font-medium shadow-lg">
         <div className="flex items-center gap-2">
-          <Shield className="size-4" />
-          <span>Detecting...</span>
+          <Shield className="size-4 animate-pulse" />
+          <span>Analyzing...</span>
         </div>
       </div>
     );
@@ -28,7 +28,7 @@ export const MaskDetectionOverlay: React.FC<MaskDetectionOverlayProps> = ({
 
   return (
     <div className="space-y-2">
-      {/* Mask Detection Status - Always visible */}
+      {/* Mask Detection Status - Always visible with accurate results */}
       <div className={cn(
         "flex items-center gap-2 px-3 py-2 rounded-lg backdrop-blur-sm text-sm font-medium border shadow-lg transition-all duration-300",
         maskResult.hasMask 
