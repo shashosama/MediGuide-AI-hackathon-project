@@ -25,9 +25,6 @@ import {
   MessageCircle,
   X,
   Send,
-  Shield,
-  ShieldCheck,
-  AlertTriangle,
   AudioLines,
   AudioWaveform,
 } from "lucide-react";
@@ -63,7 +60,6 @@ export const Conversation: React.FC = () => {
   const [maskDetectionActive, setMaskDetectionActive] = useState(false);
   const [speechErrorOccurred, setSpeechErrorOccurred] = useState(false);
   
-  const videoRef = useRef<HTMLVideoElement>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const maskDetectionInterval = useRef<NodeJS.Timeout | null>(null);
 

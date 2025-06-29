@@ -1,3 +1,3 @@
 export * from "./createConversation";
-export * from "./endConversation";
+export * from "../services/api/endConversation";
 export * from "./healthCheck";
