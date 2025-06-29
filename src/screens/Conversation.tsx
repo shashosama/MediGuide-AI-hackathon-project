@@ -61,6 +61,7 @@ export const Conversation: React.FC = () => {
   const [hasContagiousSymptoms, setHasContagiousSymptoms] = useState(false);
   const [isCallJoined, setIsCallJoined] = useState(false);
   const [maskDetectionActive, setMaskDetectionActive] = useState(false);
+  const [speechErrorOccurred, setSpeechErrorOccurred] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -90,6 +91,9 @@ export const Conversation: React.FC = () => {
         }
 
         if (finalTranscript) {
+          // Clear speech error flag on successful transcription
+          setSpeechErrorOccurred(false);
+          
           setMessages(prev => [...prev, `Patient: ${finalTranscript}`]);
           
           // Check for contagious symptoms
@@ -112,6 +116,12 @@ export const Conversation: React.FC = () => {
 
       recognitionInstance.onerror = (event: any) => {
         console.error('Speech recognition error:', event.error);
+        
+        // Set error flag specifically for 'no-speech' errors
+        if (event.error === 'no-speech') {
+          setSpeechErrorOccurred(true);
+        }
+        
         setIsListening(false);
       };
 
@@ -239,9 +249,9 @@ export const Conversation: React.FC = () => {
         daily.setLocalVideo(true);
         daily.setLocalAudio(true);
         
-        // Start speech recognition automatically after greeting
+        // Start speech recognition automatically after greeting only if no error occurred
         setTimeout(() => {
-          if (recognition && !isListening) {
+          if (recognition && !isListening && !speechErrorOccurred) {
             try {
               recognition.start();
               setIsListening(true);
@@ -257,7 +267,7 @@ export const Conversation: React.FC = () => {
         setIsJoining(false);
       });
     }
-  }, [conversation?.conversation_url, daily, isJoining, recognition]);
+  }, [conversation?.conversation_url, daily, isJoining, recognition, speechErrorOccurred]);
 
   // Handle Tavus events
   useEffect(() => {
@@ -271,7 +281,8 @@ export const Conversation: React.FC = () => {
         if (recognition && isListening) {
           recognition.stop();
           setTimeout(() => {
-            if (recognition && !isListening) {
+            // Only restart if no speech error occurred
+            if (recognition && !isListening && !speechErrorOccurred) {
               try {
                 recognition.start();
                 setIsListening(true);
@@ -321,7 +332,7 @@ export const Conversation: React.FC = () => {
     return () => {
       daily.off("app-message", handleAppMessage);
     };
-  }, [daily, recognition, isListening, isCallJoined]);
+  }, [daily, recognition, isListening, isCallJoined, speechErrorOccurred]);
 
   const handleDiagnoseSymptom = (symptom: string) => {
     const symptomLower = symptom.toLowerCase();
@@ -358,6 +369,8 @@ export const Conversation: React.FC = () => {
       recognition.stop();
       setIsListening(false);
     } else {
+      // Clear error flag when user manually toggles speech recognition
+      setSpeechErrorOccurred(false);
       try {
         recognition.start();
         setIsListening(true);
