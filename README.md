@@ -48,7 +48,7 @@ The system intelligently routes patients to the appropriate medical departments:
 - **Urology**: Urinary system issues
 - **General Medicine**: Primary care and general health concerns
 
-## What I Learned
+## What We Learned As A Team
 
 ### AI Integration and Development
 - **Multi-Modal AI Architecture**: Designing systems that combine NLP, computer vision, and conversational AI
