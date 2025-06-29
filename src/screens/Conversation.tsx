@@ -28,6 +28,8 @@ import {
   Shield,
   ShieldCheck,
   AlertTriangle,
+  AudioLines,
+  AudioWaveform,
 } from "lucide-react";
 import { maskDetector, MaskDetectionResult, isContagiousSymptom } from "@/utils/maskDetection";
 import { MaskDetectionOverlay } from "@/components/MaskDetectionOverlay";
@@ -468,7 +470,7 @@ export const Conversation: React.FC = () => {
             {isListening && (
               <div className="absolute top-2 left-2 bg-red-500/20 border border-red-400/30 text-red-200 px-3 py-2 rounded-lg backdrop-blur-sm text-sm flex items-center gap-2">
                 <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
-                Listening...
+                Transcribing...
               </div>
             )}
             
@@ -569,7 +571,7 @@ export const Conversation: React.FC = () => {
         {/* Control Panel - Fixed at bottom with responsive sizing */}
         <div className="flex-shrink-0 p-2 sm:p-4 border-t border-slate-200 bg-slate-50">
           <div className="flex justify-center items-center gap-2 sm:gap-4">
-            {/* Microphone Toggle */}
+            {/* Microphone Toggle (Audio) */}
             <Button 
               onClick={toggleAudio}
               className={cn(
@@ -584,7 +586,7 @@ export const Conversation: React.FC = () => {
               {isMicEnabled ? <MicIcon className="size-3 sm:size-4 md:size-5" /> : <MicOffIcon className="size-3 sm:size-4 md:size-5" />}
             </Button>
 
-            {/* Speech Recognition Toggle */}
+            {/* Speech Recognition Toggle (Transcription) */}
             {recognition && (
               <Button 
                 onClick={toggleSpeechRecognition}
@@ -592,12 +594,12 @@ export const Conversation: React.FC = () => {
                   "rounded-full transition-all duration-200 shadow-lg flex items-center justify-center",
                   "w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12",
                   isListening 
-                    ? "bg-red-500 hover:bg-red-600 text-white animate-pulse" 
+                    ? "bg-purple-500 hover:bg-purple-600 text-white animate-pulse" 
                     : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-300"
                 )}
-                title={isListening ? "Stop speech recognition" : "Start speech recognition"}
+                title={isListening ? "Stop speech transcription" : "Start speech transcription"}
               >
-                <MicIcon className="size-3 sm:size-4 md:size-5" />
+                {isListening ? <AudioWaveform className="size-3 sm:size-4 md:size-5" /> : <AudioLines className="size-3 sm:size-4 md:size-5" />}
               </Button>
             )}
 
