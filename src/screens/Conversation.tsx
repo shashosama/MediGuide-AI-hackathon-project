@@ -10,7 +10,7 @@ import {
 } from "@daily-co/daily-react";
 import Video from "@/components/Video";
 import { Button } from "@/components/ui/button";
-import { endConversation } from "@/services/api/conversation";
+import { endConversation } from "@/services/api";
 import { apiTokenAtom } from "@/store/tokens";
 import { conversationAtom } from "@/store/conversation";
 import { screenAtom } from "@/store/screens";
