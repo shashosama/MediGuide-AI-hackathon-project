@@ -57,6 +57,7 @@ export const Conversation: React.FC = () => {
   const [maskResult, setMaskResult] = useState<MaskDetectionResult | null>(null);
   const [showMaskWarning, setShowMaskWarning] = useState(false);
   const [hasContagiousSymptoms, setHasContagiousSymptoms] = useState(false);
+  const [isCallJoined, setIsCallJoined] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const maskDetectionInterval = useRef<NodeJS.Timeout | null>(null);
@@ -93,8 +94,8 @@ export const Conversation: React.FC = () => {
             setShowMaskWarning(true);
           }
           
-          // Send to Tavus CVI
-          if (daily) {
+          // Send to Tavus CVI only if call is joined
+          if (daily && isCallJoined) {
             daily.sendAppMessage({
               event_type: "conversation.text_input",
               text: finalTranscript
@@ -116,7 +117,7 @@ export const Conversation: React.FC = () => {
 
       setRecognition(recognitionInstance);
     }
-  }, [daily]);
+  }, [daily, isCallJoined]);
 
   // Initialize mask detection
   useEffect(() => {
@@ -173,6 +174,7 @@ export const Conversation: React.FC = () => {
         console.log("Successfully joined conversation");
         setIsJoining(false);
         setJoinError(null);
+        setIsCallJoined(true);
         
         // Set initial media state
         daily.setLocalVideo(true);
@@ -181,8 +183,12 @@ export const Conversation: React.FC = () => {
         // Start speech recognition automatically after greeting
         setTimeout(() => {
           if (recognition && !isListening) {
-            recognition.start();
-            setIsListening(true);
+            try {
+              recognition.start();
+              setIsListening(true);
+            } catch (error) {
+              console.error('Failed to start speech recognition:', error);
+            }
           }
         }, 3000); // Wait 3 seconds after joining
         
@@ -192,7 +198,7 @@ export const Conversation: React.FC = () => {
         setIsJoining(false);
       });
     }
-  }, [conversation?.conversation_url, daily, isJoining, recognition, isListening]);
+  }, [conversation?.conversation_url, daily, isJoining, recognition]);
 
   // Handle Tavus events
   useEffect(() => {
@@ -206,8 +212,13 @@ export const Conversation: React.FC = () => {
         if (recognition && isListening) {
           recognition.stop();
           setTimeout(() => {
-            if (recognition) {
-              recognition.start();
+            if (recognition && !isListening) {
+              try {
+                recognition.start();
+                setIsListening(true);
+              } catch (error) {
+                console.error('Failed to restart speech recognition:', error);
+              }
             }
           }, 2000);
         }
@@ -222,21 +233,26 @@ export const Conversation: React.FC = () => {
             const responseText = `Based on the symptoms described, I recommend visiting the ${result.department}. They are located on the ${result.floor}.`;
             setMessages(prev => [...prev, `Medical Assistant: ${responseText}`]);
             
-            // Send response back to Tavus CVI
-            daily.sendAppMessage({
-              event_type: "conversation.text_respond",
-              text: responseText
-            });
+            // Send response back to Tavus CVI only if call is joined
+            if (isCallJoined) {
+              daily.sendAppMessage({
+                event_type: "conversation.text_respond",
+                text: responseText
+              });
+            }
           }
         } catch (error) {
           console.error("Tool call error:", error);
           const errorResponse = "I apologize, but I'm having trouble processing the request. Could the symptoms be described again?";
           setMessages(prev => [...prev, `Medical Assistant: ${errorResponse}`]);
           
-          daily.sendAppMessage({
-            event_type: "conversation.text_respond",
-            text: errorResponse
-          });
+          // Send error response only if call is joined
+          if (isCallJoined) {
+            daily.sendAppMessage({
+              event_type: "conversation.text_respond",
+              text: errorResponse
+            });
+          }
         }
       }
     };
@@ -246,7 +262,7 @@ export const Conversation: React.FC = () => {
     return () => {
       daily.off("app-message", handleAppMessage);
     };
-  }, [daily, recognition, isListening]);
+  }, [daily, recognition, isListening, isCallJoined]);
 
   const handleDiagnoseSymptom = (symptom: string) => {
     const symptomLower = symptom.toLowerCase();
@@ -283,8 +299,12 @@ export const Conversation: React.FC = () => {
       recognition.stop();
       setIsListening(false);
     } else {
-      recognition.start();
-      setIsListening(true);
+      try {
+        recognition.start();
+        setIsListening(true);
+      } catch (error) {
+        console.error('Failed to start speech recognition:', error);
+      }
     }
   };
 
@@ -298,8 +318,8 @@ export const Conversation: React.FC = () => {
       setShowMaskWarning(true);
     }
     
-    // Send message to Tavus CVI
-    if (daily) {
+    // Send message to Tavus CVI only if call is joined
+    if (daily && isCallJoined) {
       daily.sendAppMessage({
         event_type: "conversation.text_input",
         text: input
