@@ -48,6 +48,237 @@ The system intelligently routes patients to the appropriate medical departments:
 - **Urology**: Urinary system issues
 - **General Medicine**: Primary care and general health concerns
 
+## Technology Stack
+
+### Frontend
+- **React 18** with TypeScript
+- **Tailwind CSS** for responsive design
+- **Framer Motion** for smooth animations
+- **Jotai** for state management
+
+### AI/ML
+- **TensorFlow.js** for browser-based machine learning
+- **Custom NLP Engine** for symptom analysis
+- **Risk Assessment Algorithm** for medical triage
+
+### Integration
+- **Tavus CVI API** for conversational video interface
+- **Daily.co** for real-time video
+- **LocalStorage** for persistent user data
+
+## Getting Started
+
+### Prerequisites
+- **Node.js 20.x** (recommended: 20.12.2 or higher)
+- **npm** (comes with Node.js)
+- **Tavus API Key** ([Get one here](https://platform.tavus.io/api-keys))
+- **Modern browser** with WebRTC support (Chrome, Firefox, Safari, Edge)
+
+### Installation
+
+#### Step 1: Clone the Repository
+```bash
+git clone https://github.com/yourusername/advanced-medical-ai.git
+cd advanced-medical-ai
+```
+
+#### Step 2: Install Dependencies
+
+**Option A: Standard Installation (Try this first)**
+```bash
+npm install
+```
+
+**Option B: If you encounter dependency conflicts**
+```bash
+# Clear any existing cache and modules
+npm cache clean --force
+rm -rf node_modules package-lock.json
+
+# Install with legacy peer dependencies (recommended for Vite projects)
+npm install --legacy-peer-deps
+```
+
+**Option C: If Option B fails**
+```bash
+# Force installation (use as last resort)
+npm install --force
+```
+
+#### Step 3: Environment Setup
+1. Get your Tavus API key from [platform.tavus.io](https://platform.tavus.io/api-keys)
+2. The application will prompt you to enter your API key when you first run it
+3. No additional environment file setup is required
+
+#### Step 4: Start Development Server
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:5173`
+
+### Troubleshooting Common Issues
+
+#### Dependency Conflicts
+If you see errors like:
+```
+npm ERR! Conflicting peer dependency: @types/node@24.0.7
+npm ERR! peer dep missing: @types/node@>=20.1.0 <22.0.0
+```
+
+**Solution:**
+```bash
+# Option 1: Use legacy peer deps (recommended)
+npm install --legacy-peer-deps
+
+# Option 2: Downgrade @types/node to compatible version
+npm install @types/node@20.12.0 --save-dev
+
+# Option 3: Clear everything and reinstall
+rm -rf node_modules package-lock.json
+npm cache clean --force
+npm install --legacy-peer-deps
+```
+
+#### Node.js Version Issues
+- **Required**: Node.js 20.x or higher
+- **Check your version**: `node --version`
+- **Recommended**: Use Node Version Manager (nvm)
+  ```bash
+  # Install nvm (macOS/Linux)
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+  
+  # Use the correct Node version
+  nvm install 20.12.2
+  nvm use 20.12.2
+  ```
+
+#### Camera/Microphone Access Issues
+- **Chrome**: Go to Settings > Privacy and Security > Site Settings > Camera/Microphone
+- **Firefox**: Click the camera/microphone icon in the address bar
+- **Safari**: Safari > Preferences > Websites > Camera/Microphone
+
+#### Build Issues
+```bash
+# Clear build cache
+npm run build --clean
+
+# If TypeScript errors occur
+npx tsc --noEmit
+
+# Check for missing dependencies
+npm audit fix
+```
+
+### Development Commands
+
+```bash
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Run linting
+npm run lint
+
+# Type checking
+npx tsc --noEmit
+```
+
+### Browser Compatibility
+
+| Browser | Version | Video Chat | Text Chat | Mask Detection |
+|---------|---------|------------|-----------|----------------|
+| Chrome  | 88+     | ✅         | ✅        | ✅             |
+| Firefox | 85+     | ✅         | ✅        | ✅             |
+| Safari  | 14+     | ✅         | ✅        | ✅             |
+| Edge    | 88+     | ✅         | ✅        | ✅             |
+
+### Configuration
+
+#### Tavus API Setup
+1. Create account at [platform.tavus.io](https://platform.tavus.io)
+2. Generate API key from dashboard
+3. Enter API key in the application when prompted
+4. Customize medical personas and replicas as needed
+
+#### Optional: Custom Personas
+- Default Persona ID: `p3bb4745d4f9` (Medical Assistant)
+- Default Replica ID: `rb17cf590e15` (Medical Replica)
+- Override in Settings if you have custom personas
+
+### Deployment
+
+#### Build for Production
+```bash
+npm run build
+```
+
+#### Deploy to Netlify
+```bash
+# Install Netlify CLI
+npm install -g netlify-cli
+
+# Deploy
+netlify deploy --prod --dir=dist
+```
+
+#### Deploy to Vercel
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Deploy
+vercel --prod
+```
+
+### Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+│   ├── ui/             # Base UI components
+│   ├── layout/         # Layout components
+│   └── ...             # Feature-specific components
+├── screens/            # Main application screens
+│   ├── auth/           # Authentication screens
+│   ├── main/           # Core application screens
+│   └── status/         # Status and error screens
+├── utils/              # Utility functions
+│   ├── ai/             # AI-related utilities
+│   ├── storage/        # Data storage utilities
+│   └── ...             # Other utilities
+├── store/              # State management (Jotai)
+├── types/              # TypeScript type definitions
+└── styles/             # Global styles and CSS
+```
+
+### Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+### Performance Tips
+
+- **Enable hardware acceleration** in your browser for better TensorFlow.js performance
+- **Use Chrome** for optimal WebRTC and AI performance
+- **Close unnecessary tabs** when using video chat features
+- **Ensure stable internet** connection for video consultations
+
+### Security & Privacy
+
+- **Local Processing**: All AI analysis happens in your browser
+- **No Data Transmission**: Medical data never leaves your device
+- **Secure Storage**: User data encrypted in browser storage
+- **HIPAA Considerations**: Designed with healthcare privacy in mind
+
 ## What We Learned As A Team
 
 ### AI Integration and Development
@@ -78,59 +309,6 @@ The system intelligently routes patients to the appropriate medical departments:
 - **Mobile-First Medical Design**: Creating interfaces that prioritize mobile users in healthcare settings
 - **Documentation for Medical Systems**: Creating clear documentation for complex healthcare applications
 
-## Technology Stack
-
-### Frontend
-- **React 18** with TypeScript
-- **Tailwind CSS** for responsive design
-- **Framer Motion** for smooth animations
-- **Jotai** for state management
-
-### AI/ML
-- **TensorFlow.js** for browser-based machine learning
-- **Custom NLP Engine** for symptom analysis
-- **Risk Assessment Algorithm** for medical triage
-
-### Integration
-- **Tavus CVI API** for conversational video interface
-- **Daily.co** for real-time video
-- **LocalStorage** for persistent user data
-
-## Getting Started
-
-### Prerequisites
-- Node.js 18+
-- Tavus API Key ([Get one here](https://platform.tavus.io/api-keys))
-- Modern browser with WebRTC support
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/advanced-medical-ai.git
-cd advanced-medical-ai
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
-### Configuration
-1. Get your Tavus API key from [platform.tavus.io](https://platform.tavus.io/api-keys)
-2. Enter your API key in the application settings
-3. Customize medical personas and replicas as needed
-
-### Deployment
-```bash
-# Build for production
-npm run build
-
-# Deploy to your preferred platform
-npm run deploy
-```
-
 ## Medical Disclaimer
 
 **Important**: This application is for informational and educational purposes only. It does not provide medical advice, diagnosis, or treatment. Always consult with qualified healthcare professionals for medical decisions. In case of medical emergencies, call emergency services immediately.
@@ -140,7 +318,5 @@ npm run deploy
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
-
-
 
 *Making healthcare navigation smarter, safer, and more accessible through responsible AI innovation.*
