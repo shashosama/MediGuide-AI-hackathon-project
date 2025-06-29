@@ -60,6 +60,7 @@ export const Conversation: React.FC = () => {
   const [showMaskWarning, setShowMaskWarning] = useState(false);
   const [hasContagiousSymptoms, setHasContagiousSymptoms] = useState(false);
   const [isCallJoined, setIsCallJoined] = useState(false);
+  const [maskDetectionActive, setMaskDetectionActive] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -122,12 +123,14 @@ export const Conversation: React.FC = () => {
     }
   }, [daily, isCallJoined]);
 
-  // Initialize mask detection
+  // Initialize mask detection immediately
   useEffect(() => {
     const initMaskDetection = async () => {
       try {
+        console.log('Initializing mask detection...');
+        setMaskDetectionActive(true);
         await maskDetector.loadModel();
-        console.log('Mask detection model loaded successfully');
+        console.log('Mask detection ready!');
       } catch (error) {
         console.error('Failed to initialize mask detection:', error);
       }
@@ -143,44 +146,37 @@ export const Conversation: React.FC = () => {
     };
   }, []);
 
-  // Set up video element for mask detection
+  // Start mask detection as soon as camera is available
   useEffect(() => {
-    if (localSessionId && isCameraEnabled) {
-      // Get the actual video element from Daily
-      const videoElement = document.querySelector(`video[data-session-id="${localSessionId}"]`) as HTMLVideoElement;
+    if (localSessionId && isCameraEnabled && maskDetectionActive) {
+      console.log('Starting mask detection for local video...');
       
-      if (videoElement) {
-        localVideoRef.current = videoElement;
+      // Start checking for video element immediately
+      const checkForVideo = () => {
+        const videoElement = document.querySelector(`video[data-session-id="${localSessionId}"]`) as HTMLVideoElement;
         
-        // Start mask detection when video is ready
-        const startMaskDetection = () => {
-          if (maskDetectionInterval.current) {
-            clearInterval(maskDetectionInterval.current);
-          }
-          
-          maskDetectionInterval.current = setInterval(async () => {
-            if (localVideoRef.current && localVideoRef.current.videoWidth > 0) {
-              try {
-                const result = await maskDetector.detectMask(localVideoRef.current);
-                setMaskResult(result);
-                
-                // Show warning if no mask detected and user has contagious symptoms
-                if (!result.hasMask && hasContagiousSymptoms) {
-                  setShowMaskWarning(true);
-                }
-              } catch (error) {
-                console.error('Mask detection error:', error);
-              }
-            }
-          }, 3000); // Check every 3 seconds
-        };
-
-        // Wait for video to be ready
-        if (videoElement.videoWidth > 0) {
+        if (videoElement && videoElement.videoWidth > 0) {
+          console.log('Video element found, starting mask detection');
+          localVideoRef.current = videoElement;
           startMaskDetection();
-        } else {
-          videoElement.addEventListener('loadedmetadata', startMaskDetection);
+          return true;
         }
+        return false;
+      };
+
+      // Try to find video element immediately
+      if (!checkForVideo()) {
+        // If not found, keep checking every 100ms
+        const videoCheckInterval = setInterval(() => {
+          if (checkForVideo()) {
+            clearInterval(videoCheckInterval);
+          }
+        }, 100);
+
+        // Clean up after 10 seconds if video not found
+        setTimeout(() => {
+          clearInterval(videoCheckInterval);
+        }, 10000);
       }
     }
 
@@ -189,7 +185,40 @@ export const Conversation: React.FC = () => {
         clearInterval(maskDetectionInterval.current);
       }
     };
-  }, [localSessionId, isCameraEnabled, hasContagiousSymptoms]);
+  }, [localSessionId, isCameraEnabled, maskDetectionActive]);
+
+  const startMaskDetection = () => {
+    if (maskDetectionInterval.current) {
+      clearInterval(maskDetectionInterval.current);
+    }
+    
+    console.log('Starting mask detection interval...');
+    
+    // Run detection immediately
+    performMaskDetection();
+    
+    // Then run every 2 seconds for fast updates
+    maskDetectionInterval.current = setInterval(() => {
+      performMaskDetection();
+    }, 2000);
+  };
+
+  const performMaskDetection = async () => {
+    if (localVideoRef.current && localVideoRef.current.videoWidth > 0) {
+      try {
+        const result = await maskDetector.detectMask(localVideoRef.current);
+        console.log('Mask detection result:', result);
+        setMaskResult(result);
+        
+        // Show warning if no mask detected and user has contagious symptoms
+        if (!result.hasMask && hasContagiousSymptoms) {
+          setShowMaskWarning(true);
+        }
+      } catch (error) {
+        console.error('Mask detection error:', error);
+      }
+    }
+  };
 
   // Join video room
   useEffect(() => {
@@ -481,7 +510,7 @@ export const Conversation: React.FC = () => {
               </div>
             )}
             
-            {/* Mask Detection Overlay - Top right corner */}
+            {/* Mask Detection Overlay - Top right corner - ALWAYS VISIBLE */}
             <div className="absolute top-3 right-3 z-30">
               <MaskDetectionOverlay
                 maskResult={maskResult}
