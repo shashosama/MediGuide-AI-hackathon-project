@@ -62,6 +62,7 @@ export const Conversation: React.FC = () => {
   const [isCallJoined, setIsCallJoined] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
   const maskDetectionInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize speech recognition
@@ -126,6 +127,7 @@ export const Conversation: React.FC = () => {
     const initMaskDetection = async () => {
       try {
         await maskDetector.loadModel();
+        console.log('Mask detection model loaded successfully');
       } catch (error) {
         console.error('Failed to initialize mask detection:', error);
       }
@@ -141,27 +143,53 @@ export const Conversation: React.FC = () => {
     };
   }, []);
 
-  // Start mask detection when video is available
+  // Set up video element for mask detection
   useEffect(() => {
-    if (isCameraEnabled && videoRef.current) {
-      maskDetectionInterval.current = setInterval(async () => {
-        if (videoRef.current) {
-          try {
-            const result = await maskDetector.detectMask(videoRef.current);
-            setMaskResult(result);
-          } catch (error) {
-            console.error('Mask detection error:', error);
+    if (localSessionId && isCameraEnabled) {
+      // Get the actual video element from Daily
+      const videoElement = document.querySelector(`video[data-session-id="${localSessionId}"]`) as HTMLVideoElement;
+      
+      if (videoElement) {
+        localVideoRef.current = videoElement;
+        
+        // Start mask detection when video is ready
+        const startMaskDetection = () => {
+          if (maskDetectionInterval.current) {
+            clearInterval(maskDetectionInterval.current);
           }
-        }
-      }, 2000); // Check every 2 seconds
+          
+          maskDetectionInterval.current = setInterval(async () => {
+            if (localVideoRef.current && localVideoRef.current.videoWidth > 0) {
+              try {
+                const result = await maskDetector.detectMask(localVideoRef.current);
+                setMaskResult(result);
+                
+                // Show warning if no mask detected and user has contagious symptoms
+                if (!result.hasMask && hasContagiousSymptoms) {
+                  setShowMaskWarning(true);
+                }
+              } catch (error) {
+                console.error('Mask detection error:', error);
+              }
+            }
+          }, 3000); // Check every 3 seconds
+        };
 
-      return () => {
-        if (maskDetectionInterval.current) {
-          clearInterval(maskDetectionInterval.current);
+        // Wait for video to be ready
+        if (videoElement.videoWidth > 0) {
+          startMaskDetection();
+        } else {
+          videoElement.addEventListener('loadedmetadata', startMaskDetection);
         }
-      };
+      }
     }
-  }, [isCameraEnabled]);
+
+    return () => {
+      if (maskDetectionInterval.current) {
+        clearInterval(maskDetectionInterval.current);
+      }
+    };
+  }, [localSessionId, isCameraEnabled, hasContagiousSymptoms]);
 
   // Join video room
   useEffect(() => {
@@ -449,18 +477,11 @@ export const Conversation: React.FC = () => {
                     className="w-20 h-15 sm:w-24 sm:h-18 md:w-28 md:h-21"
                     tileClassName="!object-cover w-full h-full"
                   />
-                  <video
-                    ref={videoRef}
-                    className="hidden"
-                    autoPlay
-                    muted
-                    playsInline
-                  />
                 </div>
               </div>
             )}
             
-            {/* Mask Detection Overlay - Better positioned */}
+            {/* Mask Detection Overlay - Top right corner */}
             <div className="absolute top-3 right-3 z-30">
               <MaskDetectionOverlay
                 maskResult={maskResult}
@@ -469,7 +490,7 @@ export const Conversation: React.FC = () => {
               />
             </div>
             
-            {/* Speech Recognition Status - Better positioned */}
+            {/* Speech Recognition Status - Top left corner */}
             {isListening && (
               <div className="absolute top-3 left-3 z-30 bg-red-500/90 border border-red-400 text-white px-3 py-2 rounded-lg backdrop-blur-sm text-sm flex items-center gap-2 shadow-lg">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
@@ -477,7 +498,7 @@ export const Conversation: React.FC = () => {
               </div>
             )}
             
-            {/* Live Transcript - Better positioned and sized */}
+            {/* Live Transcript - Bottom overlay */}
             {transcript && (
               <div className="absolute bottom-20 left-3 right-3 z-30 bg-black/90 text-white p-3 rounded-lg text-sm max-h-24 overflow-y-auto shadow-lg">
                 <div className="text-xs opacity-70 mb-1 font-medium">Live Transcript:</div>
