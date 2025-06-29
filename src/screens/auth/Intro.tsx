@@ -35,7 +35,7 @@ export const Intro: React.FC = () => {
           <img src="/images/vector.svg" alt="Logo" className="mt-2 mb-1" style={{ width: '30px', height: 'auto' }} />
 
           {/* Hospital Name */}
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1">BateShaShuan Hospital</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1">BateShaun Hospital</h1>
           <div className="w-16 h-0.5 bg-blue-600 rounded-full mb-2"></div>
 
           <h2 className="text-base sm:text-lg font-semibold text-slate-700 mb-1" style={{ fontFamily: 'Source Code Pro, monospace' }}>Medical AI Assistant</h2>
