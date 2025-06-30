@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { DialogWrapper, AnimatedTextBlockWrapper } from "@/components/DialogWrapper";
+import { DialogWrapper } from "@/components/DialogWrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { handleSymptomInput } from "@/utils/symptomHelper";
@@ -144,7 +144,7 @@ export const TextChat: React.FC = () => {
             new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : // 1 week for high
             undefined
         });
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to save medical record:', error);
       }
     }
@@ -278,7 +278,7 @@ export const TextChat: React.FC = () => {
       setAuthError('');
       setHasInteracted(false);
       setShowMobileMenu(false);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Logout error:', error);
     }
   };

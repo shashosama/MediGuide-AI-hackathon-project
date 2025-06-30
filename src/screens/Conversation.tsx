@@ -60,7 +60,7 @@ export const Conversation: React.FC = () => {
   const [maskDetectionActive, setMaskDetectionActive] = useState(false);
   const [speechErrorOccurred, setSpeechErrorOccurred] = useState(false);
   
-  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const maskDetectionInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize speech recognition
